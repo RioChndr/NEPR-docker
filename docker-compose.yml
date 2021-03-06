@@ -1,0 +1,41 @@
+version: "3.9"
+services:
+  db:
+    container_name: database_postgres
+    image: postgres
+    restart: always
+    environment: 
+      POSTGRES_PASSWORD: pass123
+      POSTGRES_USER: postgres
+      POSTGRES_DB: test-rio
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    ports:
+      - '5433:5432'
+  backend:
+    image: node:14
+    container_name: backend_expressjs
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend/:/app
+    command: sh -c "yarn install && yarn run start"
+    depends_on: 
+      - db
+  frontend:
+    image: node:14
+    container_name: frontend_nuxt
+    working_dir: /app/frontend/
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./frontend/:/app/frontend/
+    command: sh -c "yarn install & yarn run dev"
+    environment:
+      - HOST=0.0.0.0
+  redis: 
+    container_name: redis_cache
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
