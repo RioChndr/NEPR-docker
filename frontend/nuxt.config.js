@@ -54,7 +54,7 @@ export default {
   // Axios module configuration: https://go.nuxtjs.dev/config-axios
   axios: {
     baseURL: 'http://backend:3000',
-    browserBaseURL: 'http://backend:3000'
+    browserBaseURL: 'http://127.0.0.1:3000'
   },
 
   auth: {
