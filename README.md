@@ -19,7 +19,7 @@ docker-compose up
 
 ## Documentation
 
-### Route API (Express Js)
+### Route Backend/API (Express Js)
 
 locate: `localhost:3000`
 
@@ -43,6 +43,21 @@ locate: `localhost:8000`
 ### User
 
 there is no default user, for the first time use this needs to create/register new user.
+
+### How NEPR Work
+
+1. User register from frontend (**NuxtJs**) and calls API to backend (**ExpressJs**).
+2. Backend create new user and save to **Postgres**
+3. User login and also calls API to backend
+4. Backend create new token and send it to front-end as a token that use everytime request to backend
+5. When creating token, backend also save that token to **redis** cache
+6. When user login for next time, backend will check to **redis** if there is a token saved in there, if not will create new token, if yes will return that token
+7. When user are doing request, the token needs to validate with a few steps
+   1. Is the token valid ?, if not, return with error
+   2. Is token available in **redis** ?, if not, return error
+   3. Is token in redis (same with request's token) is not expired ?, if not, return error
+   4. if all validation passed, the request will continue to process, if not request will rejected.
+8. When users logout, backend just delete the token in redis. so, even if there are attacker use the token (not expired) but not available in redis, cannot access the account.
 
 ## Todo
 
