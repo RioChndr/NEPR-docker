@@ -58,6 +58,12 @@ export default {
   },
 
   auth: {
+    redirect: {
+      login: '/login',
+      home: '/',
+      logout: '/',
+      callback: '/'
+    },
     strategies: {
       local: {
         endpoints: {
@@ -67,11 +73,11 @@ export default {
             propertyName: 'token'
           },
           user: {
-            url: '/me',
+            url: '/users/me',
             method: 'get'
           },
           logout: {
-            url: '/auth/logout',
+            url: '/logout',
             method: 'get'
           }
         },

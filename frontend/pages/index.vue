@@ -1,15 +1,24 @@
 <template>
   <v-container>
-    <v-row>
+    <v-row justify="center">
       <v-col md="6">
         <v-card>
-          <v-card-title>
+          <v-card-title class="text-center">
             <div class="text-h3 text-center mb-3">
               Selamat datang
             </div>
+            <div v-if="$auth.user" class="text-left">
+              Anda sudah login. Halo {{ $auth.user.username }} <br>
+              <nuxt-link to="/profile">
+                Edit profil anda
+              </nuxt-link> <br>
+              <nuxt-link to="/private">
+                Private Page
+              </nuxt-link> <br>
+            </div>
           </v-card-title>
           <v-card-text>
-            <div class="d-flex justify-center">
+            <div v-if="!$auth.user" class="d-flex justify-center">
               <v-btn color="primary" to="/login">
                 Login
               </v-btn>
@@ -17,6 +26,9 @@
                 Register
               </v-btn>
             </div>
+            <v-btn v-else color="secondary" to="/logout" small>
+              Logout
+            </v-btn>
           </v-card-text>
         </v-card>
       </v-col>

@@ -29,8 +29,7 @@ User.init({
     },
     username: {
         type: sequelize_1.DataTypes.STRING,
-        allowNull: false,
-        unique: true
+        allowNull: false
     },
     password: {
         type: sequelize_1.DataTypes.STRING,

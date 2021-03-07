@@ -58,7 +58,9 @@ function verifyToken(token, callback: (err:any, result?:any) => void) {
       //active
       clientRedis.get(keyData, (err, tokenOnRedis) => {
         console.log(`error get token from redis : ${err}`);
-        if (err || token !== tokenOnRedis) {
+        console.log(`token from redis : ${tokenOnRedis}`);
+        
+        if (err || token !== tokenOnRedis || !tokenOnRedis) {
           return callback('No token saved')
         }
         console.log('token validated');
@@ -89,4 +91,22 @@ async function storeToken(user, token){
   clientRedis.expire(key, tokenExpired)
 }
 
-export { authenticateUser, generateAccessToken }
+async function removeToken(user, res){
+  const key = `token:${user.id}`
+  clientRedis.del(key, function(err){
+    if(err){
+      res.status(400).json({
+        error:{
+          message: err
+        }
+      })
+    }else{
+      res.json({
+        status: 'success logout'
+      })
+    }
+    
+  })
+}
+
+export { authenticateUser, generateAccessToken, removeToken }

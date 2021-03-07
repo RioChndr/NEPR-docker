@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateAccessToken = exports.authenticateUser = void 0;
+exports.removeToken = exports.generateAccessToken = exports.authenticateUser = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const redis_1 = __importDefault(require("redis"));
 const tokenExpired = 60 * 5; // detik * menit
@@ -68,7 +68,8 @@ function verifyToken(token, callback) {
             //active
             clientRedis.get(keyData, (err, tokenOnRedis) => {
                 console.log(`error get token from redis : ${err}`);
-                if (err || token !== tokenOnRedis) {
+                console.log(`token from redis : ${tokenOnRedis}`);
+                if (err || token !== tokenOnRedis || !tokenOnRedis) {
                     return callback('No token saved');
                 }
                 console.log('token validated');
@@ -99,4 +100,24 @@ function storeToken(user, token) {
         clientRedis.expire(key, tokenExpired);
     });
 }
+function removeToken(user, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const key = `token:${user.id}`;
+        clientRedis.del(key, function (err) {
+            if (err) {
+                res.status(400).json({
+                    error: {
+                        message: err
+                    }
+                });
+            }
+            else {
+                res.json({
+                    status: 'success logout'
+                });
+            }
+        });
+    });
+}
+exports.removeToken = removeToken;
 //# sourceMappingURL=auth.js.map

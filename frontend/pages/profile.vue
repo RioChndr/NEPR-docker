@@ -1,15 +1,21 @@
 <template>
   <v-row justify="center" align="center">
     <v-col cols="12" sm="8" md="6">
-      <v-card>
-        <v-form v-model="valid" ref="form">
+      <v-card :loading="isLoading">
+        <v-form ref="form" v-model="valid">
           <v-card-title class="headline">
-            Login
+            Akun
           </v-card-title>
           <v-card-text>
             <v-alert v-if="error" :type="error.type" dismissible>
               {{ error.message }}
             </v-alert>
+            <v-text-field
+              v-model="username"
+              :rules="usernameRules"
+              label="Username"
+              required
+            />
             <v-text-field
               v-model="email"
               :rules="emailRules"
@@ -20,7 +26,6 @@
               v-model="password"
               :rules="passwordRules"
               label="Password"
-              required
               type="password"
             />
           </v-card-text>
@@ -31,9 +36,8 @@
               color="primary"
               nuxt
               @click="validate"
-              :loading="isLoading"
             >
-              Login
+              Simpan
             </v-btn>
           </v-card-actions>
         </v-form>
@@ -45,18 +49,19 @@
 <script>
 
 export default {
-  auth: 'guest',
+  middleware: ['auth'],
   data () {
     return {
       valid: false,
-      email: '',
+      username: this.$auth.user.username,
+      email: this.$auth.user.email,
       password: '',
       emailRules: [
         v => !!v || 'Email harus diisi',
         v => /.+@.+/.test(v) || 'Eamil tidak valid'
       ],
-      passwordRules: [
-        v => !!v || 'Password harus diisi'
+      usernameRules: [
+        v => !!v || 'Username harus diisi'
       ],
       error: null,
       isLoading: false
@@ -67,27 +72,32 @@ export default {
       if (this.$refs.form.validate()) {
         this.isLoading = true
         try {
-          await this.$auth.loginWith('local', {
-            data: {
-              email: this.email,
-              password: this.password
-            }
-          })
-          console.log('berhasil login')
-          console.log(this.$auth.user);
-          this.$router.push('/')
-        } catch (error) {
-          console.log(error)
+          const dataUpdate = {
+            id: this.$auth.user.id,
+            username: this.username,
+            email: this.email
+          }
+          if (this.password) {
+            dataUpdate.password = this.password
+          }
+          const res = await this.$axios.$post('/users/me', dataUpdate)
+          console.log(res);
           this.error = {
-            type: 'error',
-            message: error.response.data.error.message ?? "Error tidak diketahui"
+            type: 'success',
+            message: 'Berhasil disimpan'
           }
           setTimeout(() => {
             this.error = null
           }, 3000);
+        } catch (error) {
+          console.log(error);
+          this.error = {
+            type: 'error',
+            message: error.response.data.error.message ?? 'Error tidak diketahui'
+          }
         }
         this.isLoading = false
-      }else{
+      } else {
         console.log('not validate');
       }
     }

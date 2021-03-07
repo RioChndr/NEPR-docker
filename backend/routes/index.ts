@@ -1,10 +1,13 @@
 import express from 'express'
 import { User } from '../models/user'
 import bcrypt from 'bcrypt'
-import { authenticateUser, generateAccessToken } from "../middleware/auth";
+import { authenticateUser, generateAccessToken, removeToken } from "../middleware/auth";
 import { Model } from 'sequelize/types';
+import { isRegularExpressionLiteral } from 'typescript';
 
 var router = express.Router();
+
+const saltRounds = 10
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -17,13 +20,16 @@ router.get('/test', async function(req, res){
     res.send("All users :" + JSON.stringify(users, null, 2))
   } catch (error) {
     console.log(`error : ${error}`);
-    res.send(`terjadi error: ${error}`)
+    res.status(500).json({
+      error:{
+        message: `terjadi error: ${error}`
+      }
+    })
   }
 })
 router.post('/register', async function(req, res){
   if (req.body.username && req.body.password){
     try {
-      const saltRounds = 10
       const hashedPass = await bcrypt.hash(req.body.password, saltRounds)
       const newUser = await User.create({
         username: req.body.username,
@@ -34,7 +40,12 @@ router.post('/register', async function(req, res){
       res.send('Berhasil register')
     } catch (error) {
       console.log(`error ${error}`);
-      res.send(`Terjadi kesalahan ${error}`)
+      res.status(500).json({
+        error:{
+          id: error,
+          message: error
+        }
+      })
     }
   } else {
     res.send("Tidak ada input username dan password")
@@ -50,7 +61,9 @@ router.post('/login', async function(req, res){
     })
     if (!getUser) {
       res.status(400).json({
-        error: `email tidak ditemukan`
+        error: {
+          message: `email tidak ditemukan`
+        }
       })
     }
     
@@ -62,14 +75,18 @@ router.post('/login', async function(req, res){
         })
       }else{
         res.status(400).json({
-          error: `email atau password salah`
+          error: {
+            message: `email atau password salah`
+          }
         })
       }
     })
   } catch (error) {
     console.log(error);
     res.status(400).json({
-      error: `terjadi kesalahan : ${error}`
+      error: {
+        message: `terjadi kesalahan : ${error}`
+      }
     })
   }
 })
@@ -96,8 +113,47 @@ router.get('/users/me', authenticateUser, async (req:any, res) => {
       }
     })
   }
+})
 
-  
+router.get('/logout', authenticateUser, async (req:any, res) => {
+  removeToken(req.user, res)
+})
+
+router.post('/users/me', authenticateUser, async (req:any, res) => {
+  const tokenDecoded = req.user
+  if (tokenDecoded.id !== req.body.id) {
+    // check is request id user same from token id user
+    return res.status(403).json({
+      error: {
+        message: 'Permintaan tidak diizinkan'
+      }
+    })
+  }
+  try {
+    let dataUpdate = {
+      username: req.body.username,
+      email: req.body.email
+    }
+    if (req.body.password) {
+      const hashedPass = await bcrypt.hash(req.body.password, saltRounds)
+      dataUpdate['password'] = hashedPass
+    }
+    await User.update(dataUpdate, {
+      where: {
+        id: tokenDecoded.id
+      }
+    })
+    res.json({
+      message: 'success update'
+    })
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      error:{
+        message: error
+      }
+    })
+  }
 })
 
 module.exports = router;

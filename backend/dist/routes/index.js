@@ -17,6 +17,7 @@ const user_1 = require("../models/user");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const auth_1 = require("../middleware/auth");
 var router = express_1.default.Router();
+const saltRounds = 10;
 /* GET home page. */
 router.get('/', function (req, res, next) {
     res.render('index', { title: 'Express' });
@@ -30,7 +31,11 @@ router.get('/test', function (req, res) {
         }
         catch (error) {
             console.log(`error : ${error}`);
-            res.send(`terjadi error: ${error}`);
+            res.status(500).json({
+                error: {
+                    message: `terjadi error: ${error}`
+                }
+            });
         }
     });
 });
@@ -38,7 +43,6 @@ router.post('/register', function (req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         if (req.body.username && req.body.password) {
             try {
-                const saltRounds = 10;
                 const hashedPass = yield bcrypt_1.default.hash(req.body.password, saltRounds);
                 const newUser = yield user_1.User.create({
                     username: req.body.username,
@@ -50,7 +54,12 @@ router.post('/register', function (req, res) {
             }
             catch (error) {
                 console.log(`error ${error}`);
-                res.send(`Terjadi kesalahan ${error}`);
+                res.status(500).json({
+                    error: {
+                        id: error,
+                        message: error
+                    }
+                });
             }
         }
         else {
@@ -68,7 +77,9 @@ router.post('/login', function (req, res) {
             });
             if (!getUser) {
                 res.status(400).json({
-                    error: `email tidak ditemukan`
+                    error: {
+                        message: `email tidak ditemukan`
+                    }
                 });
             }
             bcrypt_1.default.compare(req.body.password, getUser.password, (err, isSame) => __awaiter(this, void 0, void 0, function* () {
@@ -80,7 +91,9 @@ router.post('/login', function (req, res) {
                 }
                 else {
                     res.status(400).json({
-                        error: `email atau password salah`
+                        error: {
+                            message: `email atau password salah`
+                        }
                     });
                 }
             }));
@@ -88,7 +101,9 @@ router.post('/login', function (req, res) {
         catch (error) {
             console.log(error);
             res.status(400).json({
-                error: `terjadi kesalahan : ${error}`
+                error: {
+                    message: `terjadi kesalahan : ${error}`
+                }
             });
         }
     });
@@ -112,6 +127,46 @@ router.get('/users/me', auth_1.authenticateUser, (req, res) => __awaiter(void 0,
             error: {
                 id: 'no.token',
                 message: 'Unauthorized'
+            }
+        });
+    }
+}));
+router.get('/logout', auth_1.authenticateUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    auth_1.removeToken(req.user, res);
+}));
+router.post('/users/me', auth_1.authenticateUser, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const tokenDecoded = req.user;
+    if (tokenDecoded.id !== req.body.id) {
+        // check is request id user same from token id user
+        return res.status(403).json({
+            error: {
+                message: 'Permintaan tidak diizinkan'
+            }
+        });
+    }
+    try {
+        let dataUpdate = {
+            username: req.body.username,
+            email: req.body.email
+        };
+        if (req.body.password) {
+            const hashedPass = yield bcrypt_1.default.hash(req.body.password, saltRounds);
+            dataUpdate['password'] = hashedPass;
+        }
+        yield user_1.User.update(dataUpdate, {
+            where: {
+                id: tokenDecoded.id
+            }
+        });
+        res.json({
+            message: 'success update'
+        });
+    }
+    catch (error) {
+        console.log(error);
+        res.status(400).json({
+            error: {
+                message: error
             }
         });
     }
