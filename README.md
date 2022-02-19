@@ -1,17 +1,15 @@
 # Readme
 
-## About this
+## Introduction
 
-this is NEPR (Nuxtjs-ExpressJs-Postgres-Redis) Stack web development
+this is NEPR (Nuxtjs-ExpressJs-Postgres-Redis) Web Development Stack using docker
 
-- Nuxtjs as frontend
-- ExpressJs as backend
-- Postgres as database
-- Redis as cache token session
+- Frontend : Nuxtjs
+- Backend / API : ExpressJs
+- DB : Postgre and Redis (Token Cache Session)
 
 ## Instalation
 
-The architecture has wrapped in docker-compose, first thing first you need to install `docker`. To run this file type this :
 
 ```bash
 docker-compose up
